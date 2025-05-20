@@ -1,7 +1,10 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
+const mainMenu = document.getElementById('mainMenu');
+const startBtn = document.getElementById('startBtn');
 
+let gameState = 'menu';
 let animationFrameId;
 
 const mario = {
@@ -46,8 +49,8 @@ const levels = [
     platforms: [
       { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
       { x: 100, y: 320, width: 100, height: 10 },
-      { x: 250, y: 260, width: 100, height: 10, type: 'moving', dx: 0.6, minX: 250, maxX: 400 },
-      { x: 400, y: 200, width: 100, height: 10, type: 'moving', dx: -0.6, minX: 300, maxX: 500 },
+      { x: 250, y: 260, width: 100, height: 10 },
+      { x: 400, y: 200, width: 100, height: 10 },
       { x: 550, y: 140, width: 100, height: 10 }
     ],
     coins: [
@@ -101,20 +104,6 @@ const gameOverSound = new Audio('assets/gameover.wav');
 let keys = {};
 let jumpPressed = false;
 
-function resetGame() {
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  score = 0;
-  gameOver = false;
-  gameWon = false;
-  timer = 60;
-  currentLevelIndex = 0;
-  showMessage = false;
-  showNextLevelScreen = false;
-  loadLevel(currentLevelIndex);
-  restartBtn.style.display = 'none';
-  update();
-}
-
 function restartLevel() {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   gameOver = false;
@@ -122,20 +111,17 @@ function restartLevel() {
   timer = 60;
   showMessage = false;
   showNextLevelScreen = false;
-  loadLevel(currentLevelIndex); // reload current level only
+  loadLevel(currentLevelIndex);
   restartBtn.style.display = 'none';
   update();
 }
 
-setInterval(() => {
-  if (!gameOver && !gameWon && timer > 0 && !showNextLevelScreen) {
-    timer--;
-    if (timer === 0) {
-      gameOver = true;
-      gameOverSound.play();
-    }
-  }
-}, 1000);
+startBtn.addEventListener('click', () => {
+  gameState = 'playing';
+  mainMenu.style.display = 'none';
+  loadLevel(currentLevelIndex);
+  update();
+});
 
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
@@ -147,13 +133,11 @@ document.addEventListener('keydown', e => {
       jumpSound.play();
     }
   }
-
   if (e.code === 'KeyR') {
-    if (gameOver) restartLevel();       // Restart current level only
-    else if (gameWon) resetGame();      // Full reset only on win
+    if (gameOver) restartLevel();
+    else if (gameWon) location.reload(); // simple reset
   }
 });
-
 document.addEventListener('keyup', e => {
   keys[e.code] = false;
   if (["Space", "ArrowUp", "KeyW"].includes(e.code)) jumpPressed = false;
@@ -161,7 +145,7 @@ document.addEventListener('keyup', e => {
 
 restartBtn.addEventListener('click', () => {
   if (gameOver) restartLevel();
-  else if (gameWon) resetGame();
+  else if (gameWon) location.reload();
 });
 
 function isColliding(a, b) {
@@ -177,6 +161,8 @@ function checkCollision(player, platform) {
 }
 
 function update() {
+  if (gameState === 'menu') return;
+
   if (gameOver || gameWon) {
     ctx.fillStyle = 'black';
     ctx.font = '40px Arial';
@@ -188,36 +174,7 @@ function update() {
     return;
   }
 
-  if (showNextLevelScreen) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '36px Arial';
-    ctx.fillText(`Level ${currentLevelIndex + 1}`, canvas.width / 2 - 60, canvas.height / 2);
-    animationFrameId = requestAnimationFrame(update);
-    return;
-  }
-
-  if (showLevelIntro) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '36px Arial';
-    ctx.fillText(`Level ${currentLevelIndex + 1}`, canvas.width / 2 - 60, canvas.height / 2);
-    levelIntroTimer--;
-    if (levelIntroTimer <= 0) showLevelIntro = false;
-    animationFrameId = requestAnimationFrame(update);
-    return;
-  }
-
   restartBtn.style.display = 'none';
-
-  for (let p of platforms) {
-    if (p.type === 'moving') {
-      p.x += p.dx;
-      if (p.x < p.minX || p.x + p.width > p.maxX) p.dx *= -1;
-    }
-  }
 
   mario.grounded = false;
   if (keys['ArrowRight'] || keys['KeyD']) mario.x += mario.speed;
@@ -230,7 +187,6 @@ function update() {
       mario.dy = 0;
       mario.grounded = true;
       mario.jumps = 0;
-      if (p.type === 'moving') mario.x += p.dx;
     }
   }
 
@@ -275,18 +231,11 @@ function update() {
 
   if (isColliding(mario, flag)) {
     if (coins.every(c => c.collected)) {
-      if (!showNextLevelScreen && !gameWon) {
-        showNextLevelScreen = true;
-        setTimeout(() => {
-          currentLevelIndex++;
-          if (currentLevelIndex < levels.length) {
-            loadLevel(currentLevelIndex);
-            showNextLevelScreen = false;
-          } else {
-            gameWon = true;
-            showNextLevelScreen = false;
-          }
-        }, 1500);
+      currentLevelIndex++;
+      if (currentLevelIndex < levels.length) {
+        loadLevel(currentLevelIndex);
+      } else {
+        gameWon = true;
       }
     } else {
       showMessage = true;
@@ -295,10 +244,8 @@ function update() {
   }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  platforms.forEach(p => {
-    ctx.fillStyle = p.type === 'moving' ? 'orange' : 'green';
-    ctx.fillRect(p.x, p.y, p.width, p.height);
-  });
+  ctx.fillStyle = 'green';
+  platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
   coins.forEach(c => {
     if (!c.collected) ctx.drawImage(coinImg, c.x, c.y, c.width, c.height);
   });
@@ -325,8 +272,7 @@ let imagesLoaded = 0;
 function onImageLoad() {
   imagesLoaded++;
   if (imagesLoaded === 4) {
-    loadLevel(0);
-    update();
+    mainMenu.style.display = 'block';
   }
 }
 marioImg.onload = onImageLoad;

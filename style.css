@@ -24,3 +24,31 @@ canvas {
   border: 2px solid #000;
   cursor: pointer;
 }
+
+#mainMenu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border: 2px solid #000;
+  border-radius: 15px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+#mainMenu h1 {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+#mainMenu button {
+  font-size: 18px;
+  padding: 10px 25px;
+  cursor: pointer;
+  background: #fff;
+  border: 2px solid black;
+  border-radius: 10px;
+}
