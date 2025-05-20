@@ -3,6 +3,9 @@ const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
 const mainMenu = document.getElementById('mainMenu');
 const startBtn = document.getElementById('startBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const jumpBtn = document.getElementById('jumpBtn');
 
 let gameState = 'menu';
 let animationFrameId = null;
@@ -24,7 +27,6 @@ let currentLevelIndex = 0;
 let platforms = [], coins = [], enemies = [], flag = {};
 
 const levels = [
-  // Level 1
   {
     platforms: [
       { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
@@ -43,7 +45,6 @@ const levels = [
     ],
     flag: { x: 700, y: canvas.height - 70, width: 40, height: 60 }
   },
-  // Level 2
   {
     platforms: [
       { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
@@ -63,7 +64,6 @@ const levels = [
     ],
     flag: { x: 680, y: 80, width: 40, height: 60 }
   },
-  // Level 3
   {
     platforms: [
       { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
@@ -160,6 +160,9 @@ startBtn.addEventListener('click', () => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   gameState = 'playing';
   mainMenu.style.display = 'none';
+  if (window.innerWidth <= 768) {
+    document.getElementById('mobileControls').style.display = 'flex';
+  }
   loadLevel(currentLevelIndex);
   update();
 });

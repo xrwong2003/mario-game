@@ -24,3 +24,25 @@ canvas {
   border: 2px solid #000;
   cursor: pointer;
 }
+
+#mobileControls {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  z-index: 999;
+}
+
+#mobileControls button {
+  padding: 15px 25px;
+  font-size: 24px;
+  border: none;
+  background-color: #ffffffdd;
+  border-radius: 8px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
