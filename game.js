@@ -5,7 +5,6 @@ const mainMenu = document.getElementById('mainMenu');
 const startBtn = document.getElementById('startBtn');
 
 let gameState = 'menu';
-let animationFrameId;
 
 const mario = {
   x: 50, y: 300, width: 40, height: 40,
@@ -21,12 +20,10 @@ let timer = 60;
 let showMessage = false;
 let messageTimer = 0;
 let currentLevelIndex = 0;
-let showNextLevelScreen = false;
-let showLevelIntro = true;
-let levelIntroTimer = 60;
 let platforms = [], coins = [], enemies = [], flag = {};
 
 const levels = [
+  // Level 1
   {
     platforms: [
       { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
@@ -45,6 +42,7 @@ const levels = [
     ],
     flag: { x: 700, y: canvas.height - 70, width: 40, height: 60 }
   },
+  // Level 2
   {
     platforms: [
       { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
@@ -63,6 +61,30 @@ const levels = [
       { x: 260, platformIndex: 2, speed: 0.9, direction: -1 }
     ],
     flag: { x: 680, y: 80, width: 40, height: 60 }
+  },
+  // Level 3
+  {
+    platforms: [
+      { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
+      { x: 150, y: 320, width: 120, height: 10 },
+      { x: 310, y: 260, width: 100, height: 10 },
+      { x: 450, y: 200, width: 100, height: 10 },
+      { x: 600, y: 160, width: 100, height: 10 },
+      { x: 700, y: 100, width: 80, height: 10 }
+    ],
+    coins: [
+      { x: 180, y: 290, width: 20, height: 20 },
+      { x: 340, y: 230, width: 20, height: 20 },
+      { x: 480, y: 170, width: 20, height: 20 },
+      { x: 610, y: 130, width: 20, height: 20 },
+      { x: 720, y: 70, width: 20, height: 20 }
+    ],
+    enemies: [
+      { x: 160, platformIndex: 1, speed: 1.0, direction: 1 },
+      { x: 460, platformIndex: 3, speed: 1.0, direction: -1 },
+      { x: 610, platformIndex: 4, speed: 1.0, direction: 1 }
+    ],
+    flag: { x: 730, y: 40, width: 40, height: 60 }
   }
 ];
 
@@ -88,8 +110,11 @@ function loadLevel(index) {
   mario.y = 300;
   mario.dy = 0;
   mario.jumps = 0;
-  showLevelIntro = true;
-  levelIntroTimer = 60;
+  timer = 60;
+  showMessage = false;
+  messageTimer = 0;
+  gameOver = false;
+  gameWon = false;
 }
 
 const marioImg = new Image(); marioImg.src = 'assets/mario.png';
@@ -104,25 +129,6 @@ const gameOverSound = new Audio('assets/gameover.wav');
 let keys = {};
 let jumpPressed = false;
 
-function restartLevel() {
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  gameOver = false;
-  gameWon = false;
-  timer = 60;
-  showMessage = false;
-  showNextLevelScreen = false;
-  loadLevel(currentLevelIndex);
-  restartBtn.style.display = 'none';
-  update();
-}
-
-startBtn.addEventListener('click', () => {
-  gameState = 'playing';
-  mainMenu.style.display = 'none';
-  loadLevel(currentLevelIndex);
-  update();
-});
-
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if ((e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') && !jumpPressed) {
@@ -135,9 +141,10 @@ document.addEventListener('keydown', e => {
   }
   if (e.code === 'KeyR') {
     if (gameOver) restartLevel();
-    else if (gameWon) location.reload(); // simple reset
+    else if (gameWon) location.reload();
   }
 });
+
 document.addEventListener('keyup', e => {
   keys[e.code] = false;
   if (["Space", "ArrowUp", "KeyW"].includes(e.code)) jumpPressed = false;
@@ -147,6 +154,18 @@ restartBtn.addEventListener('click', () => {
   if (gameOver) restartLevel();
   else if (gameWon) location.reload();
 });
+
+startBtn.addEventListener('click', () => {
+  gameState = 'playing';
+  mainMenu.style.display = 'none';
+  loadLevel(currentLevelIndex);
+  update();
+});
+
+function restartLevel() {
+  loadLevel(currentLevelIndex);
+  update();
+}
 
 function isColliding(a, b) {
   return a.x < b.x + b.width && a.x + a.width > b.x &&
@@ -161,7 +180,7 @@ function checkCollision(player, platform) {
 }
 
 function update() {
-  if (gameState === 'menu') return;
+  if (gameState !== 'playing') return;
 
   if (gameOver || gameWon) {
     ctx.fillStyle = 'black';
@@ -170,7 +189,7 @@ function update() {
     ctx.font = '20px Arial';
     ctx.fillText("Press R or click Restart", canvas.width / 2 - 110, canvas.height / 2 + 20);
     restartBtn.style.display = 'block';
-    animationFrameId = requestAnimationFrame(update);
+    requestAnimationFrame(update);
     return;
   }
 
@@ -194,10 +213,8 @@ function update() {
   if (mario.x < 0) mario.x = 0;
   if (mario.x + mario.width > canvas.width) mario.x = canvas.width - mario.width;
   if (mario.y + mario.height > canvas.height) {
-    mario.y = canvas.height - mario.height;
-    mario.dy = 0;
-    mario.grounded = true;
-    mario.jumps = 0;
+    gameOver = true;
+    gameOverSound.play();
   }
 
   for (let c of coins) {
@@ -213,7 +230,9 @@ function update() {
       e.startDelay--;
     } else {
       e.x += e.speed * e.direction;
-      if (e.x <= e.platform.x || e.x + e.width >= e.platform.x + e.platform.width) e.direction *= -1;
+      if (e.x <= e.platform.x || e.x + e.width >= e.platform.x + e.platform.width) {
+        e.direction *= -1;
+      }
     }
 
     if (isColliding(mario, e)) {
@@ -265,8 +284,18 @@ function update() {
     if (messageTimer === 0) showMessage = false;
   }
 
-  animationFrameId = requestAnimationFrame(update);
+  requestAnimationFrame(update);
 }
+
+setInterval(() => {
+  if (gameState === 'playing' && !gameOver && !gameWon && timer > 0) {
+    timer--;
+    if (timer === 0) {
+      gameOver = true;
+      gameOverSound.play();
+    }
+  }
+}, 1000);
 
 let imagesLoaded = 0;
 function onImageLoad() {
@@ -275,6 +304,7 @@ function onImageLoad() {
     mainMenu.style.display = 'block';
   }
 }
+
 marioImg.onload = onImageLoad;
 coinImg.onload = onImageLoad;
 enemyImg.onload = onImageLoad;
