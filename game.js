@@ -4,6 +4,9 @@ const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
 const mainMenu = document.getElementById('mainMenu');
 const startBtn = document.getElementById('startBtn');
+const levelCompleteOverlay = document.getElementById('levelCompleteOverlay');
+const levelCompleteText = document.getElementById('levelCompleteText');
+const nextLevelBtn = document.getElementById('nextLevelBtn');
 
 let gameState = 'menu';
 let animationFrameId = null;
@@ -120,6 +123,12 @@ startBtn.addEventListener('click', () => {
   update();
 });
 
+nextLevelBtn.addEventListener('click', () => {
+  levelCompleteOverlay.style.display = 'none';
+  loadLevel(currentLevelIndex);
+  update();
+});
+
 function restartLevel() {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   loadLevel(currentLevelIndex);
@@ -211,7 +220,9 @@ function update() {
     if (coins.every(c => c.collected)) {
       currentLevelIndex++;
       if (currentLevelIndex < levels.length) {
-        loadLevel(currentLevelIndex);
+        levelCompleteText.textContent = `Level ${currentLevelIndex} Complete!`;
+        levelCompleteOverlay.style.display = 'flex';
+        return;
       } else {
         gameWon = true;
       }
@@ -256,7 +267,6 @@ setInterval(() => {
   }
 }, 1000);
 
-// Mobile swipe gestures
 let touchStartX = 0;
 let touchStartY = 0;
 
