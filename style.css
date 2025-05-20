@@ -25,48 +25,30 @@ canvas {
   cursor: pointer;
 }
 
-#mobileControls {
+#mainMenu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border: 2px solid #000;
+  border-radius: 15px;
+  text-align: center;
   display: none;
-  position: fixed;
-  bottom: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  z-index: 999;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
-#mobileControls button {
-  padding: 15px 25px;
-  font-size: 24px;
-  border: none;
-  background-color: #ffffffdd;
-  border-radius: 8px;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-  cursor: pointer;
-}
-
-#levelCompleteOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  color: white;
+#mainMenu h1 {
   font-size: 32px;
+  margin-bottom: 20px;
 }
 
-#nextLevelBtn {
-  margin-top: 20px;
-  padding: 10px 20px;
+#mainMenu button {
   font-size: 18px;
-  background-color: white;
-  border: none;
-  border-radius: 5px;
+  padding: 10px 25px;
   cursor: pointer;
+  background: #fff;
+  border: 2px solid black;
+  border-radius: 10px;
 }
-
