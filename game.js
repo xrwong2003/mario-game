@@ -1,11 +1,9 @@
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
 const mainMenu = document.getElementById('mainMenu');
 const startBtn = document.getElementById('startBtn');
-const leftBtn = document.getElementById('leftBtn');
-const rightBtn = document.getElementById('rightBtn');
-const jumpBtn = document.getElementById('jumpBtn');
 
 let gameState = 'menu';
 let animationFrameId = null;
@@ -44,48 +42,6 @@ const levels = [
       { x: 390, platformIndex: 2, speed: 0.9, direction: -1 }
     ],
     flag: { x: 700, y: canvas.height - 70, width: 40, height: 60 }
-  },
-  {
-    platforms: [
-      { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
-      { x: 100, y: 320, width: 100, height: 10 },
-      { x: 250, y: 260, width: 100, height: 10 },
-      { x: 400, y: 200, width: 100, height: 10 },
-      { x: 550, y: 140, width: 100, height: 10 }
-    ],
-    coins: [
-      { x: 130, y: 290, width: 20, height: 20 },
-      { x: 280, y: 230, width: 20, height: 20 },
-      { x: 430, y: 170, width: 20, height: 20 }
-    ],
-    enemies: [
-      { x: 110, platformIndex: 1, speed: 0.9, direction: 1 },
-      { x: 260, platformIndex: 2, speed: 0.9, direction: -1 }
-    ],
-    flag: { x: 680, y: 80, width: 40, height: 60 }
-  },
-  {
-    platforms: [
-      { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
-      { x: 150, y: 320, width: 120, height: 10 },
-      { x: 310, y: 260, width: 100, height: 10 },
-      { x: 450, y: 200, width: 100, height: 10 },
-      { x: 600, y: 160, width: 100, height: 10 },
-      { x: 700, y: 100, width: 80, height: 10 }
-    ],
-    coins: [
-      { x: 180, y: 290, width: 20, height: 20 },
-      { x: 340, y: 230, width: 20, height: 20 },
-      { x: 480, y: 170, width: 20, height: 20 },
-      { x: 610, y: 130, width: 20, height: 20 },
-      { x: 720, y: 70, width: 20, height: 20 }
-    ],
-    enemies: [
-      { x: 160, platformIndex: 1, speed: 1.0, direction: 1 },
-      { x: 460, platformIndex: 3, speed: 1.0, direction: -1 },
-      { x: 610, platformIndex: 4, speed: 1.0, direction: 1 }
-    ],
-    flag: { x: 730, y: 40, width: 40, height: 60 }
   }
 ];
 
@@ -160,9 +116,6 @@ startBtn.addEventListener('click', () => {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   gameState = 'playing';
   mainMenu.style.display = 'none';
-  if (window.innerWidth <= 768) {
-    document.getElementById('mobileControls').style.display = 'flex';
-  }
   loadLevel(currentLevelIndex);
   update();
 });
@@ -302,6 +255,37 @@ setInterval(() => {
     }
   }
 }, 1000);
+
+// Mobile swipe gestures
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', function (e) {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+
+document.addEventListener('touchend', function (e) {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = touchStartY - e.changedTouches[0].clientY;
+
+  if (Math.abs(dy) > Math.abs(dx) && dy > 50) {
+    if (!jumpPressed && mario.jumps < mario.maxJumps) {
+      mario.dy = mario.jumpPower;
+      mario.jumps++;
+      jumpSound.play();
+      jumpPressed = true;
+      setTimeout(() => jumpPressed = false, 150);
+    }
+  } else if (Math.abs(dx) > 30) {
+    if (dx > 0) keys['ArrowRight'] = true;
+    else keys['ArrowLeft'] = true;
+    setTimeout(() => {
+      keys['ArrowRight'] = false;
+      keys['ArrowLeft'] = false;
+    }, 200);
+  }
+});
 
 let imagesLoaded = 0;
 function onImageLoad() {
