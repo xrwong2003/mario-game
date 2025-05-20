@@ -45,6 +45,24 @@ const levels = [
       { x: 390, platformIndex: 2, speed: 0.9, direction: -1 }
     ],
     flag: { x: 700, y: canvas.height - 70, width: 40, height: 60 }
+  },
+  {
+    platforms: [
+      { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 },
+      { x: 100, y: 320, width: 100, height: 10 },
+      { x: 250, y: 260, width: 100, height: 10 },
+      { x: 400, y: 200, width: 100, height: 10 }
+    ],
+    coins: [
+      { x: 130, y: 290, width: 20, height: 20 },
+      { x: 280, y: 230, width: 20, height: 20 },
+      { x: 430, y: 170, width: 20, height: 20 }
+    ],
+    enemies: [
+      { x: 110, platformIndex: 1, speed: 1.0, direction: 1 },
+      { x: 260, platformIndex: 2, speed: 1.0, direction: -1 }
+    ],
+    flag: { x: 680, y: 80, width: 40, height: 60 }
   }
 ];
 
@@ -124,7 +142,9 @@ startBtn.addEventListener('click', () => {
 });
 
 nextLevelBtn.addEventListener('click', () => {
+  currentLevelIndex++;
   levelCompleteOverlay.style.display = 'none';
+  gameState = 'playing';
   loadLevel(currentLevelIndex);
   update();
 });
@@ -218,10 +238,10 @@ function update() {
 
   if (isColliding(mario, flag)) {
     if (coins.every(c => c.collected)) {
-      currentLevelIndex++;
-      if (currentLevelIndex < levels.length) {
-        levelCompleteText.textContent = `Level ${currentLevelIndex} Complete!`;
+      if (currentLevelIndex + 1 < levels.length) {
+        levelCompleteText.textContent = `Level ${currentLevelIndex + 1} Complete!`;
         levelCompleteOverlay.style.display = 'flex';
+        gameState = 'paused';
         return;
       } else {
         gameWon = true;
@@ -266,36 +286,6 @@ setInterval(() => {
     }
   }
 }, 1000);
-
-let touchStartX = 0;
-let touchStartY = 0;
-
-document.addEventListener('touchstart', function (e) {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-});
-
-document.addEventListener('touchend', function (e) {
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = touchStartY - e.changedTouches[0].clientY;
-
-  if (Math.abs(dy) > Math.abs(dx) && dy > 50) {
-    if (!jumpPressed && mario.jumps < mario.maxJumps) {
-      mario.dy = mario.jumpPower;
-      mario.jumps++;
-      jumpSound.play();
-      jumpPressed = true;
-      setTimeout(() => jumpPressed = false, 150);
-    }
-  } else if (Math.abs(dx) > 30) {
-    if (dx > 0) keys['ArrowRight'] = true;
-    else keys['ArrowLeft'] = true;
-    setTimeout(() => {
-      keys['ArrowRight'] = false;
-      keys['ArrowLeft'] = false;
-    }, 200);
-  }
-});
 
 let imagesLoaded = 0;
 function onImageLoad() {
