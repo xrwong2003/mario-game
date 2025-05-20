@@ -1,7 +1,3 @@
-
-// Full working game.js with 3 levels, level complete screen, correct transition logic
-// Everything is included below
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
@@ -320,3 +316,37 @@ marioImg.onload = onImageLoad;
 coinImg.onload = onImageLoad;
 enemyImg.onload = onImageLoad;
 flagImg.onload = onImageLoad;
+
+
+/* --- MOBILE SWIPE SUPPORT --- */
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', function (e) {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+
+document.addEventListener('touchend', function (e) {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = touchStartY - e.changedTouches[0].clientY;
+
+  if (Math.abs(dy) > Math.abs(dx) && dy > 50) {
+    // Swipe up = Jump
+    if (!jumpPressed && mario.jumps < mario.maxJumps) {
+      mario.dy = mario.jumpPower;
+      mario.jumps++;
+      jumpSound.play();
+      jumpPressed = true;
+      setTimeout(() => jumpPressed = false, 150);
+    }
+  } else if (Math.abs(dx) > 30) {
+    // Swipe left or right
+    if (dx > 0) keys['ArrowRight'] = true;
+    else keys['ArrowLeft'] = true;
+    setTimeout(() => {
+      keys['ArrowRight'] = false;
+      keys['ArrowLeft'] = false;
+    }, 200);
+  }
+});
