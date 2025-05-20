@@ -5,6 +5,7 @@ const mainMenu = document.getElementById('mainMenu');
 const startBtn = document.getElementById('startBtn');
 
 let gameState = 'menu';
+let animationFrameId = null;
 
 const mario = {
   x: 50, y: 300, width: 40, height: 40,
@@ -156,6 +157,7 @@ restartBtn.addEventListener('click', () => {
 });
 
 startBtn.addEventListener('click', () => {
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
   gameState = 'playing';
   mainMenu.style.display = 'none';
   loadLevel(currentLevelIndex);
@@ -163,6 +165,7 @@ startBtn.addEventListener('click', () => {
 });
 
 function restartLevel() {
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
   loadLevel(currentLevelIndex);
   update();
 }
@@ -189,7 +192,7 @@ function update() {
     ctx.font = '20px Arial';
     ctx.fillText("Press R or click Restart", canvas.width / 2 - 110, canvas.height / 2 + 20);
     restartBtn.style.display = 'block';
-    requestAnimationFrame(update);
+    animationFrameId = requestAnimationFrame(update);
     return;
   }
 
@@ -284,7 +287,7 @@ function update() {
     if (messageTimer === 0) showMessage = false;
   }
 
-  requestAnimationFrame(update);
+  animationFrameId = requestAnimationFrame(update);
 }
 
 setInterval(() => {
