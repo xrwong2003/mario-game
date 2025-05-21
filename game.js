@@ -1,5 +1,3 @@
-// --- FINALIZED FULL game.js WITH MOVING PLATFORM + MOBILE SWIPE + IMAGE LOADING ---
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
@@ -84,6 +82,42 @@ const levels = [
     flag: { x: 700, y: 120, width: 40, height: 60 }
   }
 ];
+
+function loadLevel(index) {
+  const level = levels[index];
+  platforms = level.platforms.map(p => ({ ...p, originalX: p.x }));
+  coins = level.coins.map(c => ({ ...c, collected: false }));
+  flag = { ...level.flag };
+  enemies = level.enemies.map(e => {
+    const p = platforms[e.platformIndex];
+    return {
+      x: e.x, y: p.y - 40, width: 40, height: 40,
+      speed: e.speed, direction: e.direction,
+      platform: p, startDelay: 30
+    };
+  });
+  mario.x = 50;
+  mario.y = 300;
+  mario.dy = 0;
+  mario.jumps = 0;
+  timer = 60;
+  showMessage = false;
+  messageTimer = 0;
+  gameOver = false;
+  gameWon = false;
+}
+
+function isColliding(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x &&
+         a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function checkCollision(player, platform) {
+  return player.x < platform.x + platform.width &&
+         player.x + player.width > platform.x &&
+         player.y + player.height <= platform.y + 5 &&
+         player.y + player.height + player.dy >= platform.y;
+}
 
 function update() {
   if (gameState !== 'playing') return;
@@ -185,3 +219,124 @@ function update() {
 
   animationFrameId = requestAnimationFrame(update);
 }
+
+setInterval(() => {
+  if (gameState === 'playing' && !gameOver && !gameWon && timer > 0) {
+    timer--;
+    if (timer === 0) {
+      gameOver = true;
+      gameOverSound.play();
+    }
+  }
+}, 1000);
+
+const marioImg = new Image(); marioImg.src = 'assets/mario.png';
+const coinImg = new Image(); coinImg.src = 'assets/coin.png';
+const enemyImg = new Image(); enemyImg.src = 'assets/enemy.png';
+const flagImg = new Image(); flagImg.src = 'assets/flag.png';
+
+const jumpSound = new Audio('assets/jump.wav');
+const coinSound = new Audio('assets/coin.wav');
+const gameOverSound = new Audio('assets/gameover.wav');
+
+let imagesLoaded = 0;
+function onImageLoad() {
+  imagesLoaded++;
+  if (imagesLoaded === 4) {
+    mainMenu.style.display = 'block';
+  }
+}
+
+marioImg.onload = onImageLoad;
+coinImg.onload = onImageLoad;
+enemyImg.onload = onImageLoad;
+flagImg.onload = onImageLoad;
+
+let keys = {};
+let jumpPressed = false;
+
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if ((e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') && !jumpPressed) {
+    jumpPressed = true;
+    if (mario.jumps < mario.maxJumps) {
+      mario.dy = mario.jumpPower;
+      mario.jumps++;
+      jumpSound.play();
+    }
+  }
+  if (e.code === 'KeyR') {
+    if (gameOver) restartLevel();
+    else if (gameWon) location.reload();
+  }
+});
+
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+  if (["Space", "ArrowUp", "KeyW"].includes(e.code)) jumpPressed = false;
+});
+
+restartBtn.addEventListener('click', () => {
+  if (gameOver) restartLevel();
+  else if (gameWon) location.reload();
+});
+
+startBtn.addEventListener('click', () => {
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  gameState = 'playing';
+  mainMenu.style.display = 'none';
+  loadLevel(currentLevelIndex);
+  update();
+});
+
+nextLevelBtn.addEventListener('click', () => {
+  currentLevelIndex++;
+  levelCompleteOverlay.style.display = 'none';
+  gameState = 'playing';
+  loadLevel(currentLevelIndex);
+  update();
+});
+
+function restartLevel() {
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  loadLevel(currentLevelIndex);
+  update();
+}
+
+// --- Mobile Swipe Support ---
+let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+
+function handleSwipe() {
+  const dx = touchEndX - touchStartX;
+  const dy = touchEndY - touchStartY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  const minSwipeDistance = 30;
+
+  if (absDx > absDy && absDx > minSwipeDistance) {
+    if (dx > 0) keys['ArrowRight'] = true;
+    else keys['ArrowLeft'] = true;
+    setTimeout(() => {
+      keys['ArrowRight'] = false;
+      keys['ArrowLeft'] = false;
+    }, 200);
+  } else if (dy < -minSwipeDistance) {
+    if (!jumpPressed && mario.jumps < mario.maxJumps) {
+      mario.dy = mario.jumpPower;
+      mario.jumps++;
+      jumpSound.play();
+      jumpPressed = true;
+      setTimeout(() => jumpPressed = false, 150);
+    }
+  }
+}
+
+document.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: false });
+
+document.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].clientX;
+  touchEndY = e.changedTouches[0].clientY;
+  handleSwipe();
+}, { passive: false });
