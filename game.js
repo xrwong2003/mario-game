@@ -107,27 +107,22 @@ function loadLevel(index) {
   gameWon = false;
 }
 
-function isColliding(a, b) {
-  return a.x < b.x + b.width && a.x + a.width > b.x &&
-         a.y < b.y + b.height && a.y + a.height > b.y;
-}
-
-function checkCollision(player, platform) {
-  return player.x < platform.x + platform.width &&
-         player.x + player.width > platform.x &&
-         player.y + player.height <= platform.y + 5 &&
-         player.y + player.height + player.dy >= platform.y;
-}
-
 function update() {
   if (gameState !== 'playing') return;
+  if (gameOver || gameWon) return;
 
   for (let p of platforms) {
     if (p.moving) {
-      p.x += p.speed * p.direction;
+      const delta = p.speed * p.direction;
+      p.x += delta;
       if (p.x > p.originalX + p.range || p.x < p.originalX - p.range) {
         p.direction *= -1;
       }
+      enemies.forEach(e => {
+        if (e.platform === p) {
+          e.x += delta;
+        }
+      });
     }
   }
 
@@ -151,6 +146,7 @@ function update() {
   if (mario.y + mario.height > canvas.height) {
     gameOver = true;
     gameOverSound.play();
+    return;
   }
 
   for (let c of coins) {
@@ -177,6 +173,7 @@ function update() {
       } else {
         gameOver = true;
         gameOverSound.play();
+        return;
       }
     }
   }
@@ -188,7 +185,10 @@ function update() {
         levelCompleteOverlay.style.display = 'flex';
         gameState = 'paused';
         return;
-      } else gameWon = true;
+      } else {
+        gameWon = true;
+        return;
+      }
     } else {
       showMessage = true;
       messageTimer = 120;
