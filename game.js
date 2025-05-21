@@ -318,35 +318,52 @@ enemyImg.onload = onImageLoad;
 flagImg.onload = onImageLoad;
 
 
-/* --- MOBILE SWIPE SUPPORT --- */
 let touchStartX = 0;
 let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+
+function handleSwipe() {
+  const dx = touchEndX - touchStartX;
+  const dy = touchEndY - touchStartY;
+
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+
+  // Threshold for swipe detection
+  const minSwipeDistance = 30;
+
+  if (absDx > absDy) {
+    if (absDx > minSwipeDistance) {
+      if (dx > 0) {
+        keys['ArrowRight'] = true;
+        setTimeout(() => (keys['ArrowRight'] = false), 200);
+      } else {
+        keys['ArrowLeft'] = true;
+        setTimeout(() => (keys['ArrowLeft'] = false), 200);
+      }
+    }
+  } else {
+    if (dy < -minSwipeDistance) {
+      // Swipe up = jump
+      if (!jumpPressed && mario.jumps < mario.maxJumps) {
+        mario.dy = mario.jumpPower;
+        mario.jumps++;
+        jumpSound.play();
+        jumpPressed = true;
+        setTimeout(() => (jumpPressed = false), 150);
+      }
+    }
+  }
+}
 
 document.addEventListener('touchstart', function (e) {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
-});
+}, { passive: false });
 
 document.addEventListener('touchend', function (e) {
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = touchStartY - e.changedTouches[0].clientY;
-
-  if (Math.abs(dy) > Math.abs(dx) && dy > 50) {
-    // Swipe up = Jump
-    if (!jumpPressed && mario.jumps < mario.maxJumps) {
-      mario.dy = mario.jumpPower;
-      mario.jumps++;
-      jumpSound.play();
-      jumpPressed = true;
-      setTimeout(() => jumpPressed = false, 150);
-    }
-  } else if (Math.abs(dx) > 30) {
-    // Swipe left or right
-    if (dx > 0) keys['ArrowRight'] = true;
-    else keys['ArrowLeft'] = true;
-    setTimeout(() => {
-      keys['ArrowRight'] = false;
-      keys['ArrowLeft'] = false;
-    }, 200);
-  }
-});
+  touchEndX = e.changedTouches[0].clientX;
+  touchEndY = e.changedTouches[0].clientY;
+  handleSwipe();
+}, { passive: false });
