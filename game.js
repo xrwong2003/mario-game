@@ -1,3 +1,5 @@
+// --- FULLY FUNCTIONAL game.js ---
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
@@ -83,6 +85,18 @@ const levels = [
   }
 ];
 
+function isColliding(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x &&
+         a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function checkCollision(player, platform) {
+  return player.x < platform.x + platform.width &&
+         player.x + player.width > platform.x &&
+         player.y + player.height <= platform.y + 5 &&
+         player.y + player.height + player.dy >= platform.y;
+}
+
 function loadLevel(index) {
   const level = levels[index];
   platforms = level.platforms.map(p => ({ ...p, originalX: p.x }));
@@ -121,6 +135,7 @@ function update() {
       enemies.forEach(e => {
         if (e.platform === p) {
           e.x += delta;
+          e.y = p.y - e.height;
         }
       });
     }
@@ -217,6 +232,7 @@ function update() {
     if (messageTimer === 0) showMessage = false;
   }
 
+  restartBtn.style.display = (gameOver || gameWon) ? 'block' : 'none';
   animationFrameId = requestAnimationFrame(update);
 }
 
@@ -303,7 +319,6 @@ function restartLevel() {
   update();
 }
 
-// --- Mobile Swipe Support ---
 let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
 
 function handleSwipe() {
